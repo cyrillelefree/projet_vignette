@@ -1,0 +1,17 @@
+---
+ansible_user: cyrille
+ansible_password: "{{ vault_ansible_password }}"
+
+#create repos_directory
+remote_repos_directory: /home/data/jenkins/projet_vignette
+remote_dest_path: /home/data/jenkins/projet_vignette
+
+#for registry deployment
+registry_folder_path: files/Projet-Vignette-jhipster-registry
+
+#for msuaa deployment
+msuaa_folder_path: files/Projet-Vignette-Uaa
+
+#for msapp deployment
+msapp_folder_path: files/Projet-Vignette-App
+

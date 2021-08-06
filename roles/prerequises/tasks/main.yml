@@ -1,0 +1,56 @@
+---
+#INSTALL PREREQUISES TOOLS FOR VIGNETTE PROJECTS DEPLOY 
+- name: "Install git, java, maven"
+  apt:
+    update_cache: yes
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - git
+    - maven
+    - openjdk-11-jdk
+    - openjdk-11-jre
+
+- name: "Install nginx container"
+  docker_container:
+    name: "nginx"
+    image: "etopian/nginx-proxy"
+    volumes:
+      - /etc/nginx/htpasswd:/etc/nginx/htpasswd
+      - /etc/nginx/vhost.d:/etc/nginx/vhost.d:ro
+      - /etc/nginx/certs:/etc/nginx/certs
+      -  /var/run/docker.sock:/tmp/docker.sock:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    state: started
+
+- name: "Delete old mysql container"
+  docker_container:
+    name: "mysql-vignette"
+    force_kill: true
+    keep_volumes: true
+    state: absent
+
+- name: "Install mysql container"
+  docker_container:
+    name: "mysql-vignette"
+    image: "mysql:5.7"
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ vault_mysql_root_password }}"
+    volumes:
+      - /home/data/mysql-vignette:/var/lib/mysql
+    state: started
+    ports:
+      - "3306:3306"
+
+- name: "open ports"
+  ufw:
+    state: enabled
+    rule: allow
+    proto: tcp
+    port: "{{ item }}"
+  loop:
+    - "80"
+    - "443"
+    - "3306"

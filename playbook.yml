@@ -1,0 +1,16 @@
+---
+
+#Deploy vignette projet
+
+- hosts: all
+  gather_facts: false
+  become: yes 
+  vars:
+  vars_files:
+    - vars/variables.yml
+    - vars/credentials.yml
+  roles:
+    - prerequises
+    - registry
+    - msuaa
+    - msapp

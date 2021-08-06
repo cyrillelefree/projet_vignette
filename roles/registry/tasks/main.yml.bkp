@@ -1,0 +1,52 @@
+---
+- name: "Install jhipster-registry to node"
+  hosts: prod
+  become: true
+  vars:
+    - registry_folder_path: ../files/Projet-Vignette-jhipster-registry
+    - remote_dest_path: /home/data/jenkins/projet_vignette
+  pre_tasks:
+    - name: "create repository directory"
+      file:
+        path: /home/data/jenkins/projet_vignette
+        state: directory
+        mode: 0775
+        recurse: yes
+
+    - name: "copy sources registry to node"
+      copy:
+        src: "{{ registry_folder_path}}"
+        dest: "{{ remote_dest_path }}"
+
+  tasks:
+    - name: "Build registry image"
+      command: "{{ item }}"
+      args:
+        chdir: "/home/data/jenkins/projet_vignette/Projet-Vignette-jhipster-registry"
+      with_items:
+        - "docker image build -t spvignemsregistry ."
+        - "apt update"
+        - "apt install python3 python3-pip"
+        - "pip3 install docker-compose~=1.23.0"
+        - "chmod +x mvnw"
+        - "screen -S registry -L -d -m bash -c 'sudo ./mvnw' "
+
+#    - name: "delete old container"
+#      docker_container:
+#        name: "spvigne-msregistry"
+#        force_kill: true
+#        keep_volumes: true
+#        state: absent
+#
+#    - name: "Run container"
+#      docker_container:
+#        name: spvigne-msregistry
+#        image: spvignemsregistry
+#        ports:
+#          - "8761:8761"
+
+    - name: "enable 8761"
+      ufw:
+        rule: allow
+        port: "8761"
+        proto: tcp

@@ -1,0 +1,41 @@
+---
+# "Install spvignemsuaa to node"
+- name: "create repository directory"
+  file:
+    path: "{{ remote_repos_directory }}"
+    state: directory
+    mode: 0775
+    recurse: yes
+
+- name: "copy sources msapp to node"
+  copy:
+    src: "{{ msapp_folder_path}}"
+    dest: "{{remote_dest_path}}"
+
+- name: "Build msapp image"
+  command: "{{ item }}"
+  args:
+    chdir: "/home/data/jenkins/projet_vignette/Projet-Vignette-App"
+  with_items:
+    - "./mvnw clean package -Pdev jib:dockerBuild"
+
+- name: "delete old container"
+  docker_container:
+    name: "spvigne-msapp-test"
+    force_kill: true
+    keep_volumes: true
+    state: absent
+
+- name: "Run container"
+  docker_container:
+    name: spvigne-msapp-test
+    image: spvignemsapp-test
+    ports:
+      - "8081:8081"
+
+- name: "enable 8081"
+  ufw:
+    rule: allow
+    proto: tcp
+    port: 8081
+      

@@ -1,0 +1,53 @@
+---
+- name: "Install spvignemsuaa to node"
+  hosts: prod
+  become: true
+  vars:
+    - uaa_folder_path: ../files/Projet-Vignette-Uaa
+    - remote_dest_path: /home/data/jenkins/projet_vignette/
+  pre_tasks:
+    - name: "create repository directory"
+      file:
+        path: /home/data/jenkins/projet_vignette
+        state: directory
+        mode: 0775
+        recurse: yes
+
+    - name: "copy sources uaa to node"
+      copy:
+        src: "{{ uaa_folder_path}}"
+        dest: "{{ remote_dest_path}}"
+
+  tasks:
+    - name: "Build uaa image"
+      command: "{{ item }}"
+      args:
+        chdir: "/home/data/jenkins/projet_vignette/Projet-Vignette-Uaa"
+      with_items:
+        - "./mvnw clean package -Pdev jib:dockerBuild"
+
+    - name: "delete old container"
+      docker_container:
+        name: "spvigne-msuaa-test"
+        force_kill: true
+        keep_volumes: true
+        state: absent
+
+    - name: "Run container"
+      docker_container:
+        name: spvigne-msuaa-test
+        image: spmignemsuaa-test
+        ports:
+          - "9999:9999"
+          - "587:587"
+       
+
+    - name: "enable 9999 and 587"
+      ufw:
+        rule: allow
+        proto: tcp
+        port: '{{ item }}'
+      loop:
+        - 9999
+        - 587
+      
